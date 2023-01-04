@@ -5,6 +5,7 @@ import chokidar from 'chokidar';
 import path from 'path';
 import fs from 'fs/promises';
 import { getDatabase } from './db';
+
 import {
   getAccessToken,
   getAuthorizationUrl,
@@ -33,8 +34,10 @@ async function setupUploadWatcher() {
   uploadQueue.process(async job => {
     console.log(`Starting upload for ${job.data.filePath}`);
 
+    const filePath = job.data.filePath as string;
+
     try {
-      const mediaItems = await upload(job.data.filePath);
+      const mediaItems = await upload(filePath);
 
       const wasSuccessful = wasSuccessfulUpload(mediaItems[0]);
 
@@ -44,7 +47,7 @@ async function setupUploadWatcher() {
 
       if (wasSuccessful) {
         console.log(`Deleting file ${job.data.filePath}`);
-        await fs.unlink(job.data.filePath);
+        await fs.unlink(filePath);
       }
     } catch (e) {
       // console.log('error occurred', e);
@@ -71,7 +74,7 @@ async function main() {
   if (!db.get('access_token')) {
     // TODO: Setup tunnel with ngrok or similar so we can get the code
 
-    const authUrl = getAuthorizationUrl();
+    const authUrl = await getAuthorizationUrl();
 
     console.log('prompting for action');
     promptForUserAction(authUrl);
@@ -155,5 +158,3 @@ async function upload(filePath: string) {
 // upload(
 //   '/Users/schester/work/docker-google-photos-backup/src/consume/Media To Server_NAS.png'
 // );
-
-getAuthorizationUrl();

@@ -1,21 +1,28 @@
 import { v4 } from 'uuid';
 
+type Job = {
+  id: string;
+  data: Record<string, unknown>;
+};
+
 export class Queue {
-  private queue;
-  private processing;
+  private queue: Job[];
+  private processing: Job[];
+  private callback: (job: Job) => Promise<unknown>;
 
   constructor() {
     this.queue = [];
     this.processing = [];
+    this.callback = () => Promise.resolve();
   }
 
-  add(data) {
+  add(data: Job['data']) {
     this.queue.push({ id: v4(), data });
 
     this.processQueue();
   }
 
-  processJob(job) {
+  processJob(job: Job) {
     this.processing.push(job);
 
     this.callback(job)
@@ -42,7 +49,7 @@ export class Queue {
     jobsToProcess.forEach(job => this.processJob(job));
   }
 
-  async process(cb) {
+  async process(cb: (job: Job) => Promise<unknown>) {
     this.callback = cb;
   }
 }
